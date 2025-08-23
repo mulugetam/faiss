@@ -332,3 +332,121 @@ TEST(TestFvecAdd, add_value) {
                 << nrows;
     }
 }
+
+TEST(TestFvecSub, sub_array) {
+    // ints instead of floats for 100% accuracy
+    std::default_random_engine rng(123);
+    std::uniform_int_distribution<int32_t> uniform(0, 32);
+
+    for (const auto nrows : {1, 2, 5, 10, 15, 20, 25}) {
+        std::vector<float> a(nrows);
+        std::vector<float> b(nrows);
+        std::vector<float> expected(nrows);
+        for (size_t i = 0; i < a.size(); i++) {
+            a[i] = uniform(rng);
+            b[i] = uniform(rng);
+            expected[i] = a[i] - b[i];
+        }
+
+        std::vector<float> actual(nrows);
+        faiss::fvec_sub(a.size(), a.data(), b.data(), actual.data());
+
+        ASSERT_EQ(actual, expected)
+                << "Mismatching array-array fvec_sub results for nrows = "
+                << nrows;
+    }
+}
+
+TEST(TestFvecSub, sub_value) {
+    // ints instead of floats for 100% accuracy
+    std::default_random_engine rng(123);
+    std::uniform_int_distribution<int32_t> uniform(0, 32);
+
+    for (const auto nrows : {1, 2, 5, 10, 15, 20, 25}) {
+        std::vector<float> a(nrows);
+        const float b = uniform(rng); // value to add
+        std::vector<float> expected(nrows);
+        for (size_t i = 0; i < a.size(); i++) {
+            a[i] = uniform(rng);
+            expected[i] = a[i] - b;
+        }
+
+        std::vector<float> actual(nrows);
+        faiss::fvec_sub(a.size(), a.data(), b, actual.data());
+
+        ASSERT_EQ(actual, expected)
+                << "Mismatching array-value fvec_sub results for nrows = "
+                << nrows;
+    }
+}
+
+TEST(TestFvecMul, mul_array) {
+    // ints instead of floats for 100% accuracy
+    std::default_random_engine rng(123);
+    std::uniform_int_distribution<int32_t> uniform(0, 32);
+
+    for (const auto nrows : {1, 2, 5, 10, 15, 20, 25}) {
+        std::vector<float> a(nrows);
+        std::vector<float> b(nrows);
+        std::vector<float> expected(nrows);
+        for (size_t i = 0; i < a.size(); i++) {
+            a[i] = uniform(rng);
+            b[i] = uniform(rng);
+            expected[i] = a[i] * b[i];
+        }
+
+        std::vector<float> actual(nrows);
+        faiss::fvec_mul(a.size(), a.data(), b.data(), actual.data());
+
+        ASSERT_EQ(actual, expected)
+                << "Mismatching array-array fvec_mul results for nrows = "
+                << nrows;
+    }
+}
+
+TEST(TestFvecMul, mul_value) {
+    // ints instead of floats for 100% accuracy
+    std::default_random_engine rng(123);
+    std::uniform_int_distribution<int32_t> uniform(0, 32);
+
+    for (const auto nrows : {1, 2, 5, 10, 15, 20, 25}) {
+        std::vector<float> a(nrows);
+        const float b = uniform(rng); // value to add
+        std::vector<float> expected(nrows);
+        for (size_t i = 0; i < a.size(); i++) {
+            a[i] = uniform(rng);
+            expected[i] = a[i] * b;
+        }
+
+        std::vector<float> actual(nrows);
+        faiss::fvec_mul(a.size(), a.data(), b, actual.data());
+
+        ASSERT_EQ(actual, expected)
+                << "Mismatching array-value fvec_mul results for nrows = "
+                << nrows;
+    }
+}
+
+TEST(TestFvecAxpy, basic) {
+    // ints instead of floats for 100% accuracy
+    std::default_random_engine rng(123);
+    std::uniform_int_distribution<int32_t> uniform(0, 32);
+
+    for (const auto nrows : {1, 2, 5, 10, 15, 20, 25}) {
+        std::vector<float> a(nrows);
+        const float b = uniform(rng); // value to add
+        std::vector<float> c(nrows);
+        std::vector<float> true_axpy(nrows);
+        for (size_t i = 0; i < a.size(); i++) {
+            a[i] = uniform(rng);
+            c[i] = uniform(rng);
+            true_axpy[i] = a[i] * b + c[i];
+        }
+
+        faiss::fvec_axpy(a.size(), a.data(), b, c.data());
+
+        ASSERT_EQ(c, true_axpy)
+                << "Mismatching array-value fvec_axpy results for nrows = "
+                << nrows;
+    }
+}

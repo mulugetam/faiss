@@ -293,4 +293,68 @@ struct simd64uint8 : simd512bit {
     }
 };
 
+struct simd16float32 : simd512bit {
+    simd16float32() {}
+
+    explicit simd16float32(simd512bit x) : simd512bit(x) {}
+
+    explicit simd16float32(__m512 x) : simd512bit(x) {}
+
+    explicit simd16float32(float x) : simd512bit(_mm512_set1_ps(x)) {}
+
+    explicit simd16float32(const float* x) : simd512bit(_mm512_loadu_ps(x)) {}
+
+    explicit simd16float32(
+            float f0,  float f1,  float f2,  float f3,
+            float f4,  float f5,  float f6,  float f7,
+            float f8,  float f9,  float f10, float f11,
+            float f12, float f13, float f14, float f15)
+            : simd512bit(_mm512_setr_ps(
+                  f0, f1, f2, f3, f4, f5, f6, f7,
+                  f8, f9, f10, f11, f12, f13, f14, f15)) {}
+
+    simd16float32 operator*(simd16float32 other) const {
+        return simd16float32(_mm512_mul_ps(f, other.f));
+    }
+
+    simd16float32 operator+(simd16float32 other) const {
+        return simd16float32(_mm512_add_ps(f, other.f));
+    }
+
+    simd16float32 operator-(simd16float32 other) const {
+        return simd16float32(_mm512_sub_ps(f, other.f));
+    }
+
+    simd16float32& operator+=(const simd16float32& other) {
+        f = _mm512_add_ps(f, other.f);
+        return *this;
+    }
+
+    bool operator==(simd16float32 other) const {
+        const __mmask16 mask = _mm512_cmp_ps_mask(f, other.f, _CMP_EQ_OQ);
+        return mask == 0xffff;
+    }
+
+    bool operator!=(simd16float32 other) const {
+        return !(*this == other);
+    }
+
+    std::string tostring() const {
+        float tab[16];
+        _mm512_storeu_ps(tab, f);
+        char res[2000];
+        char* ptr = res;
+        for (int i = 0; i < 16; i++) {
+            ptr += sprintf(ptr, "%g,", tab[i]);
+        }
+        ptr[-1] = 0; // strip last comma
+        return std::string(res);
+    }
+};
+
+// compute a * b + c
+inline simd16float32 fmadd(simd16float32 a, simd16float32 b, simd16float32 c) {
+    return simd16float32(_mm512_fmadd_ps(a.f, b.f, c.f));
+}
+
 } // namespace faiss

@@ -1179,16 +1179,12 @@ void pairwise_L2sqr(
 #pragma omp parallel for
     for (int64_t i = 1; i < nq; i++) {
         float q_norm = fvec_norm_L2sqr(xq + i * ldq, d);
-        for (int64_t j = 0; j < nb; j++) {
-            dis[i * ldd + j] = q_norm + b_norms[j];
-        }
+        fvec_add(nb, b_norms, q_norm, dis + i * ldd);
     }
 
     {
         float q_norm = fvec_norm_L2sqr(xq, d);
-        for (int64_t j = 0; j < nb; j++) {
-            dis[j] += q_norm;
-        }
+        fvec_add(nb, dis, q_norm, dis);
     }
 
     {

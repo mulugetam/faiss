@@ -3733,20 +3733,114 @@ void compute_PQ_dis_tables_dsub2(
  * Vector to vector functions
  *********************************************************/
 
+#ifdef __AVX512F__
+
+void fvec_add(size_t d, const float* a, const float* b, float* c) {
+    size_t i;
+    for (i = 0; i + 15 < d; i += 16) {
+        simd16float32 ci, ai, bi;
+        ai.loadu(a + i);
+        bi.loadu(b + i);
+        ci = ai + bi;
+        ci.storeu(c + i);
+    }
+    // finish non-multiple of 16 remainder
+    for (; i < d; i++) {
+        c[i] = a[i] + b[i];
+    }
+}
+
+void fvec_add(size_t d, const float* a, float b, float* c) {
+    size_t i;
+    simd16float32 bv(b);
+    for (i = 0; i + 15 < d; i += 16) {
+        simd16float32 ci, ai;
+        ai.loadu(a + i);
+        ci = ai + bv;
+        ci.storeu(c + i);
+    }
+    // finish non-multiple of 16 remainder
+    for (; i < d; i++) {
+        c[i] = a[i] + b;
+    }
+}
+
 void fvec_sub(size_t d, const float* a, const float* b, float* c) {
     size_t i;
-    for (i = 0; i + 7 < d; i += 8) {
-        simd8float32 ci, ai, bi;
+    for (i = 0; i + 15 < d; i += 16) {
+        simd16float32 ci, ai, bi;
         ai.loadu(a + i);
         bi.loadu(b + i);
         ci = ai - bi;
         ci.storeu(c + i);
     }
-    // finish non-multiple of 8 remainder
+    // finish non-multiple of 16 remainder
     for (; i < d; i++) {
         c[i] = a[i] - b[i];
     }
 }
+
+void fvec_sub(size_t d, const float* a, float b, float* c) {
+    size_t i;
+    simd16float32 bv(b);
+    for (i = 0; i + 15 < d; i += 16) {
+        simd16float32 ci, ai;
+        ai.loadu(a + i);
+        ci = ai - bv;
+        ci.storeu(c + i);
+    }
+    // finish non-multiple of 16 remainder
+    for (; i < d; i++) {
+        c[i] = a[i] - b;
+    }
+}
+
+void fvec_mul(size_t d, const float* a, const float* b, float* c) {
+    size_t i;
+    for (i = 0; i + 15 < d; i += 16) {
+        simd16float32 ci, ai, bi;
+        ai.loadu(a + i);
+        bi.loadu(b + i);
+        ci = ai * bi;
+        ci.storeu(c + i);
+    }
+    // finish non-multiple of 16 remainder
+    for (; i < d; i++) {
+        c[i] = a[i] * b[i];
+    }
+}
+
+void fvec_mul(size_t d, const float* a, float b, float* c) {
+    size_t i;
+    simd16float32 bv(b);
+    for (i = 0; i + 15 < d; i += 16) {
+        simd16float32 ci, ai;
+        ai.loadu(a + i);
+        ci = ai * bv;
+        ci.storeu(c + i);
+    }
+    // finish non-multiple of 16 remainder
+    for (; i < d; i++) {
+        c[i] = a[i] * b;
+    }
+}
+
+void fvec_axpy(size_t d, const float* a, float b, float* c) {
+    size_t i;
+    simd16float32 bv(b);
+    for (i = 0; i + 15 < d; i += 16) {
+        simd16float32 ai(a + i);
+        simd16float32 ci(c + i);
+        ci = fmadd(ai, bv, ci);
+        ci.storeu(c + i);
+    }
+    // finish non-multiple of 16 remainder
+    for (; i < d; i++) {
+        c[i] += a[i] * b;
+    }
+}
+
+#else
 
 void fvec_add(size_t d, const float* a, const float* b, float* c) {
     size_t i;
@@ -3777,5 +3871,66 @@ void fvec_add(size_t d, const float* a, float b, float* c) {
         c[i] = a[i] + b;
     }
 }
+
+void fvec_sub(size_t d, const float* a, const float* b, float* c) {
+    size_t i;
+    for (i = 0; i + 7 < d; i += 8) {
+        simd8float32 ci, ai, bi;
+        ai.loadu(a + i);
+        bi.loadu(b + i);
+        ci = ai - bi;
+        ci.storeu(c + i);
+    }
+    // finish non-multiple of 8 remainder
+    for (; i < d; i++) {
+        c[i] = a[i] - b[i];
+    }
+}
+
+void fvec_mul(size_t d, const float* a, const float* b, float* c) {
+    size_t i;
+    for (i = 0; i + 7 < d; i += 8) {
+        simd8float32 ci, ai, bi;
+        ai.loadu(a + i);
+        bi.loadu(b + i);
+        ci = ai * bi;
+        ci.storeu(c + i);
+    }
+    // finish non-multiple of 8 remainder
+    for (; i < d; i++) {
+        c[i] = a[i] * b[i];
+    }
+}
+
+void fvec_mul(size_t d, const float* a, float b, float* c) {
+    size_t i;
+    simd8float32 bv(b);
+    for (i = 0; i + 15 < d; i += 16) {
+        simd8float32 ci, ai;
+        ai.loadu(a + i);
+        ci = ai * bv;
+        ci.storeu(c + i);
+    }
+    // finish non-multiple of 8 remainder
+    for (; i < d; i++) {
+        c[i] = a[i] * b;
+    }
+}
+
+void fvec_axpy(size_t d, const float* a, float b, float* c) {
+    size_t i;
+    simd8float32 bv(b);
+    for (i = 0; i + 7 < d; i += 8) {
+        simd8float32 ai(a + i);
+        simd8float32 ci(c + i);
+        ci = fmadd(ai, bv, ci);
+        ci.storeu(c + i);
+    }
+    // finish non-multiple of 8 remainder
+    for (; i < d; i++) {
+        c[i] += a[i] * b;
+    }
+}
+#endif
 
 } // namespace faiss
