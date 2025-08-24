@@ -178,14 +178,10 @@ void compute_centroids(
                 if (weights) {
                     float w = weights[i];
                     hassign[ci] += w;
-                    for (size_t j = 0; j < d; j++) {
-                        c[j] += xi[j] * w;
-                    }
+                    fvec_axpy(d, xi, w, c);
                 } else {
                     hassign[ci] += 1.0;
-                    for (size_t j = 0; j < d; j++) {
-                        c[j] += xi[j];
-                    }
+                    fvec_add(d, xi, c, c);
                 }
             }
         }
@@ -198,9 +194,7 @@ void compute_centroids(
         }
         float norm = 1 / hassign[ci];
         float* c = centroids + ci * d;
-        for (size_t j = 0; j < d; j++) {
-            c[j] *= norm;
-        }
+        fvec_mul(d, c, norm, c);
     }
 }
 
